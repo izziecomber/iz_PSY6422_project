@@ -404,7 +404,7 @@ htmlwidgets::saveWidget(
 
 ```
 
-```{r plot1}
+```{r plot1, results='hide', message=FALSE, warning=FALSE}
 # The interactive plot
 interactive_line_plot
 ```
@@ -477,7 +477,7 @@ htmlwidgets::saveWidget(
 
 ```
 
-```{r plot2}
+```{r plot2, results='hide', message=FALSE, warning=FALSE}
 # Display the interactive plot
 comp_interactive_line_plot
 ```
