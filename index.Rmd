@@ -1,0 +1,478 @@
+---
+title: "index"
+output: html_document
+date: "2024-12-11"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Visualising Queer Sexualities in the UK Population 2014-2022
+
+## Background, Research Question, and Data Source
+
+For this project, I wanted to create a visual that presented the proportion of Queer individuals in the UK population. While I was unable to find data that encompassed all of the LGBT+ identities, I settled for data which depicts the population estimates for lesbian, gay, and bisexual individuals, as well as other sexualities (e.g., asexual, pansexual etc.) and those who do not know or do not feel comfortable to share.
+
+The data source I have chose provided this statistic: *In 2022, the proportion of the UK household population aged 16 years and over identifying as heterosexual or straight was 93.4%. The proportion has declined over the five years since 2017 when 95.0% identified as heterosexual or straight.* As a result I decided to explore the trends of sexuality.
+
+> **Research Question:** How have trends in the proportion of individuals identifying with queer sexualities in the UK changed between 2014 and 2022?
+
+### Data source
+
+The raw data was obtained from the Office of National Statistics, from the Annual Population Survey (APS). *Office for National Statistics (ONS), released 27 September 2023, ONS website, statistical bulletin, Sexual orientation, [UK: 2021 and 2022](https://www.ons.gov.uk/peoplepopulationandcommunity/culturalidentity/sexuality/bulletins/sexualidentityuk/2021and2022#comparing-aps-estimates-with-census-2021)*
+
+**Some notes on the data (as noted by the Office of National Statistics):** *Extracted directly from the [Quality and methodology information](https://www.ons.gov.uk/peoplepopulationandcommunity/culturalidentity/sexuality/methodologies/sexualidentityukqmi#methods-used-to-produce-the-sexual-orientation-data)*
+
+Sexual orientation estimates are [Experimental Statistics](https://www.ons.gov.uk/methodology/methodologytopicsandstatisticalconcepts/guidetoexperimentalstatistics) that provide annual estimates of the UK household population aged 16 years and over broken down into heterosexual or straight, gay or lesbian, bisexual, or other, back to 2014 for England, Scotland and Wales, and 2012 for Northern Ireland. The "other" category captures people who do not consider themselves to fit into the heterosexual or straight, bisexual, gay, or lesbian categories; it might also include people who responded "other" for different reasons such as those who did not understand the terminology or who are against categorisation. There is currently no further breakdown of "other" collected in the APS, so no assumptions can be made about the sexual orientation of those responding "other". Data in the bulletin are primarily presented in percentage format, although estimates are used where needed to provide scale to the percentages; estimates of the population numbers and measures of quality (to show the levels of uncertainty associated with survey estimates) are presented in the dataset, users are advised to consult the quality measures when interpreting the estimates. The estimates published from 2016 onwards are calculated from the APS; previously, they were calculated using the Integrated Household Survey (IHS).
+
+------------------------------------------------------------------------
+
+## The project
+
+### Load required libraries
+
+The purpose of each package can be found in the code book which can be found in the /data folder in the [repository](https://github.com/izziecomber/finalproj_PSY6422/tree/main/data)
+
+```{r loadlibrary, echo = TRUE, results = 'hide', warning = FALSE, message = FALSE, cache=TRUE}
+# List of required packages
+required_packages <- c(
+  "here",
+  "tidyverse",
+  "dplyr",
+  "ggplot2",
+  "transformr",
+  "plotly",
+  "htmlwidgets",
+  "readr"
+)
+
+# Run the required packages for this visualisation - check if it's installed
+for (pkg in required_packages) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    install.packages(pkg)
+  }
+}
+
+# Load all packages 
+lapply(required_packages, library, character.only = TRUE)
+
+```
+
+### Importing data preparation and preparation
+
+```{r import, message=FALSE, warning=FALSE, results = 'hide', cache=TRUE}
+# Load data 
+sexuality_dat <- read.csv(here("data/sexual orientation table.xlsx - 1a.csv"))
+
+# Replace empty cells values with "NA"
+sexuality_dat <- read.csv("data/sexual orientation table.xlsx - 1a.csv", na.strings = c("", "NA"))
+
+# Load data using relative path 
+here("sexual orientation table.xlsx - 1a.csv")
+View(sexuality_dat)
+head(sexuality_dat)
+
+# Remove blank rows 
+new_sex_dat <- sexuality_dat %>% na.omit()
+
+# Remove years 2012 & 2013 as they don't have any data (this is due to an error in the original data set which the author retracted)
+# Also remove unneeded columns 
+clean_sex_dat <- new_sex_dat %>%
+  rename(Sexuality_data = "Table.1a..Sexual.Identity.by.Region.and.Country..United.Kingdom..2012.to.2022..thousands.") %>%
+  filter(!if_any(everything(), ~ grepl("\\[x\\]", .))) %>%
+  select(c("Sexuality_data", X, X.1, X.4, X.7, X.10, X.13, X.16, X.19, X.22, X.25, X.28, X.31, X.34, X.37, X.40)) 
+print(clean_sex_dat)
+
+# Remove notes "[note 15]" from year column
+clean_sex_dat2 <- as.data.frame(
+  lapply(clean_sex_dat, function(x) gsub("\\[note 15\\]", "", x))
+)
+
+# Rename columns - couldn't find a better way to do it, a bit tedious 
+clean_sex_dat3 <- clean_sex_dat2 %>% 
+  rename(
+    "Sexual orientation" = "Sexuality_data",
+    "Year" = "X",
+    "North East est." = "X.1",
+    "North West est." = "X.4",
+    "Yorkshire & Humber est." = "X.7",
+    "East Midlands est." = "X.10",
+    "West Midlands est." = "X.13",
+    "East est." = "X.16",
+    "London est." = "X.19",
+    "South East est." = "X.22",
+    "South West est." = "X.25",
+    "England est." = "X.28",
+    "Wales est." = "X.31",
+    "Scotland est." = "X.34",
+    "N. Ireland est." = "X.37",
+    "UK est." = "X.40"
+  ) %>%
+  filter(`Sexual orientation` != "Sexual Orientation") %>%
+  filter(`Sexual orientation` != "Heterosexual or straight")
+
+
+```
+
+## Sanity checks
+
+```{r expectations, message=FALSE, warning=FALSE, results = 'hide', cache=TRUE}
+
+# Checking the minimum and maximum years (should be 2014-2022)
+range(clean_sex_dat3$Year, na.rm = TRUE)
+
+# Structure of the data 
+summary(clean_sex_dat3)
+
+# Convert factors to numeric - long process that the internet told me to do to get all my data as numerical rather than character
+# Identify non-numeric columns, excluding "Sexual orientation"
+cols_to_convert <- sapply(names(clean_sex_dat3), function(col) {
+  col != "Sexual orientation" && !is.numeric(clean_sex_dat3[[col]])
+})
+
+# Convert the specified columns to numeric, keeping "Sexual orientation" column unchanged
+clean_sex_dat3[, cols_to_convert] <- lapply(clean_sex_dat3[, cols_to_convert, drop = FALSE], function(x) as.numeric(gsub(",", "", x)))
+
+# Identify columns that still have non-numeric data (excluding "Sexual orientation")
+non_numeric_cols <- colnames(clean_sex_dat3)[sapply(clean_sex_dat3, function(x) 
+  any(is.na(as.numeric(gsub(",", "", as.character(x))))))]
+print(non_numeric_cols)
+
+# Filter problematic rows
+problematic_rows <- clean_sex_dat3 %>%
+  filter(is.na(as.numeric(gsub(",", "", `North East est.`))))
+print(problematic_rows)
+
+# Remove columns that are completely NA
+clean_sex_dat3 <- clean_sex_dat3 %>%
+  select(where(~ !all(is.na(.))))
+
+# Minimum and maximum values for all columns
+clean_sex_dat3 %>%
+  summarise(across(where(is.numeric), list(min = ~min(., na.rm = TRUE), max = ~max(., na.rm = TRUE))))
+
+```
+
+## Data visualisation 1 - multiple barplots for regional data
+
+```{r, results = 'hide', cache=TRUE}
+# Total UK estimates excluded 
+# Had to match columns with 'est'and create new columns for 'Region' and 'Estimates'
+long_reg_data <- clean_sex_dat3 %>%
+  pivot_longer(
+    cols = matches("est\\."), 
+    names_to = "Region",       
+    values_to = "Estimate"   
+  ) %>%
+  filter(Region != "UK est.") %>%  # Exclude "UK est."
+  mutate(Estimate = as.numeric(gsub(",", "", Estimate))) 
+head(long_reg_data)
+
+barplot_dat <- long_reg_data %>%
+  filter(!Region == "England est.")
+
+# the plot 
+ggplot(barplot_dat, aes(x = Year, y = Estimate, fill = `Sexual orientation`)) +
+  geom_bar(stat = "identity") +
+  facet_wrap(~ Region, scales = "fixed") +
+  labs(
+    title = "Queer Sexual Orientation by Region Over Time",
+    x = "Year",
+    y = "Population Estimate (in thousands)",
+    fill = "Sexual Orientation"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
+
+## Visualisation 2 - improved barchart
+
+The first visualisation of the identities for each region was helpful to see the data trends across the UK but it was very cluttered and busy. For this plot I decided to use only the total UK estimate data to get feel for the general trend of the population, and to make the visualisation less overwhelming.
+
+```{r barchart, results = 'hide', cache=TRUE}
+# Reshape the data and filter for just UK est. to produce BARCHART
+long_data <- clean_sex_dat3 %>%
+  pivot_longer(
+    cols = -c(`Sexual orientation`, Year),  
+    names_to = "Region",
+    values_to = "Estimate"
+  )
+uk_data <- long_data %>%
+  filter(Region %in% c("Sexual orientation", "UK est."))
+
+# Clean the estimate column (convert to numeric and handle NA)
+uk_data <- uk_data %>%
+  mutate(
+    Estimate = as.numeric(gsub(",", "", Estimate)),  # Remove commas and convert to numeric
+    Estimate = ifelse(is.na(Estimate), 0, Estimate) # Replace NA with 0
+  )
+
+# Adjust the plot to produce barchart 
+imp_barchart <- ggplot(uk_data, aes(x = factor(Year), y = Estimate, fill = `Sexual orientation`)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "UK Estimates of Queer Sexuality 2014-2022",
+       x = "Year",
+       y = "Population Estimate (in thousands)",
+       fill = "Sexual Orientation") +
+  scale_y_continuous(
+    limits = c(0, max(uk_data$Estimate, na.rm = TRUE)),  # Automatically adjust y-axis
+    breaks = seq(0, max(uk_data$Estimate, na.rm = TRUE), by = 100)
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.text.y = element_text(size = 7))
+print(imp_barchart)
+
+```
+
+## Data visualisation 3 - Multiple line plots on the same graph
+
+This is where I started to experiment with the idea of producing a line graph for my final visualisation. So to begin with I produced a basic one.
+
+```{r multiplot, results='hide', message=FALSE, warning=FALSE, cache=TRUE}
+# Filter UK-specific data for the line graph
+uk_line_data <- long_data %>%
+  filter(Region == "UK est.") %>%  # Focus on "UK est."
+  mutate(
+    Estimate = as.numeric(gsub(",", "", Estimate))  # Ensure Estimate is numeric
+  )
+
+# Create the line graph
+line_graph <- ggplot(uk_line_data, aes(x = Year, y = Estimate, color = `Sexual orientation`, group = `Sexual orientation`)) +
+  geom_line(size = 1) +  # Use lines to connect points
+  geom_point(size = 2) +  # Add points for emphasis
+  labs(
+    title = "Trends in Sexual Orientation in the UK (2014-2022)",
+    x = "Year",
+    y = "Population Estimate (in thousands)",
+    color = "Sexual Orientation"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    axis.text.y = element_text(size = 10),
+    legend.position = "right"
+  )
+
+# Print the line graph
+print(line_graph)
+
+```
+
+## Data Visualisation 4 - Line plot
+
+I decided that the break down of regional trends is interesting and would be good to include in the visual output.
+
+```{r lineplot, results='hide', message=FALSE, warning=FALSE, cache=TRUE}
+# Create totals by region 
+totals_by_region <- clean_sex_dat3 %>%
+  pivot_longer(
+    cols = matches("est\\."), 
+    names_to = "Region",
+    values_to = "Estimate"
+  ) %>%
+  filter(!is.na(Estimate)) %>% # Exclude NA values
+  mutate(
+    Estimate = as.numeric(gsub(",", "", Estimate)), # Convert to numeric
+    Year = as.numeric(Year) # Ensure Year is numeric
+  ) %>%
+  group_by(Region, Year) %>%
+  summarise(Total = sum(Estimate, na.rm = TRUE), .groups = "drop")
+# Build the plot
+line_plot <- totals_by_region %>%
+  filter(Region != "England est.") %>% # remove as all the sub-regions make up this value
+  filter(Region != "UK est.") %>% 
+  ggplot(aes(x = Year, y = Total, color = Region, group = Region)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  scale_x_continuous(
+    breaks = seq(2014, 2022, by = 1)
+  ) +
+  labs(
+    title = "Trends in Population of Queer Sexuality by UK Region (2014-2022)",
+    x = "Year",
+    y = "Population Estimate (thousands)",
+    color = "Region"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+line_plot 
+
+# Save the line plot
+ggsave(
+  filename = "plots/line_plot_uk_queer_population.png",
+  plot = line_graph,
+  width = 12,
+  height = 8,
+  dpi = 300
+)
+
+```
+
+### Presenting the data as specific sexualities rather than a total per region
+
+This was another experimentation. I wanted to present the breakdown of each queer identity rather than having the total population of queer people. It felt dismissive and reductionist, similarly to using the whole UK data, to group all identities as one for the visualisation.
+
+```{r specific_sex, results='hide', message=FALSE, warning=FALSE, cache=TRUE}
+# Prepare the data for visualization
+long_sex_data <- clean_sex_dat3 %>%
+  pivot_longer(
+    cols = matches("est\\."),
+    names_to = "Region",
+    values_to = "Estimate"
+  ) %>%
+  filter(!is.na(Estimate) & Region != "UK est." & Region != "England est.") %>%
+  mutate(
+    Estimate = as.numeric(Estimate),
+    Year = as.numeric(Year)
+  )
+# Line plot with facets for each Sexual Orientation
+complex_line_plot <- ggplot(long_sex_data, aes(x = Year, y = Estimate, color = Region, group = interaction(Region, `Sexual orientation`))) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  scale_x_continuous(breaks = seq(2014, 2022, by = 1)) +
+  labs(
+    title = "Trends in Queer Sexual Orientation by Region (2014-2022)",
+    x = "Year",
+    y = "Population Estimate (thousands)",
+    color = "Region"
+  ) +
+  facet_wrap(~ `Sexual orientation`, scales = "free_y") +  
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+# Print the plot
+print(complex_line_plot)
+
+# Save the line plot
+ggsave(
+  filename = "plots/complex_line_plot.png",  
+  plot = complex_line_plot,                        
+  width = 12, # Width of the image in inches
+  height = 8, # Height of the image in inches
+  dpi = 300 # Resolution (dots per inch)
+)
+
+```
+
+### Interactive plot 1
+
+```{r interactive, results='hide', message=FALSE, warning=FALSE}
+# Ensure England and UK estimates are excluded 
+totals_by_region <- totals_by_region %>%
+  filter(!Region %in% c("England est.", "UK est."))
+
+# Adjust the colours of the plot 
+dynamic_colors <- colorRampPalette(c("blue", "green", "red", "purple"))(
+  length(unique(totals_by_region$Region))
+)
+interactive_line_plot <- plot_ly(
+  data = totals_by_region,
+  x = ~Year,
+  y = ~Total,
+  color = ~Region,
+  type = 'scatter',
+  mode = 'lines+markers',
+  text = ~paste(
+    "Region: ", Region,
+    "<br>Year: ", Year,
+    "<br>Population: ", Total, "k"
+  ),
+  hoverinfo = 'text',
+  colors = dynamic_colors  # Use dynamically generated colors
+) %>%
+  layout(
+    title = "Trends in Population of Queer Sexual Orientation by Region (2014-2022)",
+    xaxis = list(title = "Year", tickvals = seq(2014, 2022, 1)),
+    yaxis = list(title = "Population Estimate (thousands)"),
+    legend = list(orientation = "h", x = 0.1, y = -0.2)
+  )
+
+# Save the interactive plot as an HTML file
+htmlwidgets::saveWidget(
+  widget = interactive_line_plot,
+  file = "plots/interactive_line_plot.html",
+  selfcontained = TRUE                  
+)
+
+# The interactive plot
+interactive_line_plot
+
+```
+
+
+### Interactive plot 2
+Although I haven't presented it here, I produced an interative plot (similar to the one below) that was quite simple. The information that appeared when you hovered your mouse over the data point was the region, year, and total queer idenities for that region. To improve, I adjusted the code so that the information also included a break down of how many people identified with each individual category.
+
+```{r improved, results='hide', message=FALSE, warning=FALSE, cache=TRUE}
+# Ensure data is consistent 
+long_data <- long_data %>%
+  mutate(`Sexual orientation` = str_trim(`Sexual orientation`))
+# Aggregate data to calculate total population and breakdown 
+aggregated_data <- long_data %>%
+  group_by(Region, Year) %>%
+  filter(Region != "England est.") %>%
+  filter(Region != "UK est.") %>%
+  summarise(
+    Total = sum(Estimate, na.rm = TRUE),
+    GayLesbian = sum(Estimate[`Sexual orientation` == "Gay or lesbian"], na.rm = TRUE),
+    Bisexual = sum(Estimate[`Sexual orientation` == "Bisexual"], na.rm = TRUE),
+    Other = sum(Estimate[`Sexual orientation` == "Other"], na.rm = TRUE),
+    DontKnowRefuse = sum(Estimate[`Sexual orientation` == "Don't know or refuse"], na.rm = TRUE),
+  ) %>%
+  mutate(
+    Breakdown = paste(
+      "Gay/Lesbian: ", GayLesbian, "k",
+      "<br>Bisexual: ", Bisexual, "k",
+      "<br>Other: ", Other, "k",
+      "<br>Don't Know/Refuse: ", DontKnowRefuse, "k"
+    )
+  ) %>%
+  ungroup()
+
+# Create the interactive plot
+# Adjust the colours of the plot 
+dynamic_colors <- colorRampPalette(c("blue", "green", "red", "purple"))(
+  length(unique(aggregated_data$Region))
+)
+# The plot
+interactive_line_plot <- plot_ly(
+  data = aggregated_data,
+  x = ~Year,
+  y = ~Total,  # Total population for y-axis
+  color = ~Region,
+  type = 'scatter',
+  mode = 'lines+markers',
+  text = ~paste(
+    "Region: ", Region,
+    "<br>Year: ", Year,
+    "<br>Total Population: ", Total, "k",
+    "<br>", Breakdown
+  ),
+  hoverinfo = 'text',
+  colors = dynamic_colors
+) %>%
+  layout(
+    title = "Trends in Population of Queer Sexual Orientation by Region (2014-2022)",
+    xaxis = list(title = "Year", tickvals = seq(2014, 2022, 1)),
+    yaxis = list(title = "Population Estimate (thousands)"),
+    legend = list(orientation = "h", x = 0.1, y = -0.2)
+  )
+
+# Save the interactive plot as an HTML file
+htmlwidgets::saveWidget(
+  widget = interactive_line_plot,
+  file = "plots/interactive_line_plot.html",
+  selfcontained = TRUE
+)
+# Display the interactive plot
+interactive_line_plot
+
+```

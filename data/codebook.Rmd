@@ -1,0 +1,50 @@
+---
+title: "codebook"
+output: html_document
+date: "2024-12-09"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+### Packages
+**The purpose of each package is as follows:**
+• *"here"* - used for merging file paths (here() function in the code)
+
+• *"tidyverse"* - meta-package that includes dplyr, ggplot2, and other packages within this code
+
+• *"dpylr"* - used for data manipulation (e.g., %>%, rename, filter, select, mutate, summarise, etc.)
+
+• *"ggplot2"* - used for creating data visualisation (e.g., ggplot, geom_bar etc.)
+
+• *"plotly"* - used to create interactive plots 
+
+• *"htmlwidgets"* - used to save interactive plots as HTML files
+
+### Description of variables in the data and modifications made to data frames
+sexuality_dat - the raw data extracted from the National Office of Statistics 
+
+new_sex_dat - omitted the "NA" columns
+
+clean_sex_dat - selected only the rows that had the regional estimate, e.g., "England estimate"
+
+clean_sex_dat2 - removed "[note 15]" from the year coloumn to make data processing easier 
+
+clean_sex_dat3 - renamed the columns from "X.*" to the correct regional name
+
+long_reg_data - converted the data to long form and created new columns for 'Region' and 'Estimates'
+
+* Sexualities included in this data:*
+Gay 
+
+Straight or heterosexual 
+
+Bisexual 
+
+Other 
+
+Don't know or refuse 
+
+
+
+
