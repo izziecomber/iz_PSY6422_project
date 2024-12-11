@@ -4,7 +4,7 @@ This is a repository for the data analysis and visualisation project for module 
 ## Purpose:
 The of this project was to create a visualisation of preexisting data. 
 
-Full project is available at *****
+Full project is available at https://github.com/izziecomber/iz_PSY6422_project
 
 ### Research Question
 How have trends in the proportion of individuals identifying with queer sexualities in the UK changed between 2014 and 2022?
