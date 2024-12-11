@@ -468,8 +468,8 @@ comp_interactive_line_plot <- plot_ly(
 
 # Save the interactive plot as an HTML file
 htmlwidgets::saveWidget(
-  widget = interactive_line_plot,
-  file = "plots/interactive_line_plot.html",
+  widget = comp_interactive_line_plot,
+  file = "plots/comp_interactive_line_plot.html",
   selfcontained = TRUE
 )
 # Display the interactive plot
