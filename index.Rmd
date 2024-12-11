@@ -8,6 +8,17 @@ date: "2024-12-11"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r libraries, results='hide', message=FALSE, warning=FALSE, echo=FALSE}
+# Explicitly load the libraries 
+# There were some issues with my code 
+library(here)
+library(tidyverse)
+library(plotly)
+library(htmlwidgets)
+library(readr)
+
+```
+
 # Visualising Queer Sexualities in the UK Population 2014-2022
 
 ## Background, Research Question, and Data Source
@@ -259,6 +270,15 @@ line_graph <- ggplot(uk_line_data, aes(x = Year, y = Estimate, color = `Sexual o
 # Print the line graph
 print(line_graph)
 
+# Save the line plot
+ggsave(
+  filename = "plots/multi_line_plot.png",
+  plot = line_graph,
+  width = 12,
+  height = 8,
+  dpi = 300
+)
+
 ```
 
 ## Data Visualisation 4 - Line plot
@@ -306,7 +326,7 @@ line_plot
 # Save the line plot
 ggsave(
   filename = "plots/line_plot_uk_queer_population.png",
-  plot = line_graph,
+  plot = line_plot,
   width = 12,
   height = 8,
   dpi = 300
@@ -395,19 +415,23 @@ interactive_line_plot <- plot_ly(
     legend = list(orientation = "h", x = 0.1, y = -0.2)
   )
 
+
+```
+
+```{r plot1, message=FALSE, warning=FALSE}
+# The interactive plot
+interactive_line_plot
+```
+
+```{r save1, results='hide', message=FALSE, warning=FALSE}
 # Save the interactive plot as an HTML file
 htmlwidgets::saveWidget(
   widget = interactive_line_plot,
   file = "plots/interactive_line_plot.html",
   selfcontained = TRUE                  
 )
-
 ```
 
-```{r plot1, results='hide', message=FALSE, warning=FALSE}
-# The interactive plot
-interactive_line_plot
-```
 
 
 ### Interactive plot 2
@@ -468,17 +492,20 @@ comp_interactive_line_plot <- plot_ly(
     legend = list(orientation = "h", x = 0.1, y = -0.2)
   )
 
+
+```
+
+```{r plot2, message=FALSE, warning=FALSE}
+# Display the interactive plot
+comp_interactive_line_plot
+
+```
+
+```{r save2, results='hide', message=FALSE, warning=FALSE}
 # Save the interactive plot as an HTML file
 htmlwidgets::saveWidget(
   widget = comp_interactive_line_plot,
   file = "plots/comp_interactive_line_plot.html",
   selfcontained = TRUE
 )
-
 ```
-
-```{r plot2, results='hide', message=FALSE, warning=FALSE}
-# Display the interactive plot
-comp_interactive_line_plot
-```
-
