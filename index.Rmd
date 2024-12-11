@@ -443,7 +443,7 @@ dynamic_colors <- colorRampPalette(c("blue", "green", "red", "purple"))(
   length(unique(aggregated_data$Region))
 )
 # The plot
-interactive_line_plot <- plot_ly(
+comp_interactive_line_plot <- plot_ly(
   data = aggregated_data,
   x = ~Year,
   y = ~Total,  # Total population for y-axis
@@ -473,6 +473,6 @@ htmlwidgets::saveWidget(
   selfcontained = TRUE
 )
 # Display the interactive plot
-interactive_line_plot
+comp_interactive_line_plot
 
 ```
