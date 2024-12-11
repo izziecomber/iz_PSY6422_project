@@ -402,9 +402,11 @@ htmlwidgets::saveWidget(
   selfcontained = TRUE                  
 )
 
+```
+
+```{r plot1}
 # The interactive plot
 interactive_line_plot
-
 ```
 
 
@@ -472,7 +474,11 @@ htmlwidgets::saveWidget(
   file = "plots/comp_interactive_line_plot.html",
   selfcontained = TRUE
 )
-# Display the interactive plot
-comp_interactive_line_plot
 
 ```
+
+```{r plot2}
+# Display the interactive plot
+comp_interactive_line_plot
+```
+
